@@ -1,42 +1,37 @@
-#etsy = Etsy.new
-trending = Retsy.trending
-listings = Retsy.listings
-
-# shops = etsy.shops
-
-Listing.delete_all
-Shop.delete_all
-Image.delete_all
+i = 0
 1000.times do |n|
-	while Shop.count < 1000 do
 
+	while Shop.count < 1000 do
+		listings = Retsy.listings(which=:active, i)
+		trending = Retsy.trending(i)
 
 		listings['results'].each do |listing|
 			Listing.find_by_etsy_listing_id(listing['listing_id']) ||
-				Listing.create(title:           listing['title'],
-				               description:     listing['description'],
-				               price:           listing['price'],
-				               state:           listing['state'],
-				               category_id:     listing['category_id'],
-				               is_supply:       listing['is_supply'],
-				               is_customizable: listing['is_customizable'],
-				               etsy_listing_id: listing['listing_id'],
-				               etsy_user_id:    listing['user_id'],
-				               currency:        listing['currency_code'],
-				               quantity:        listing['quantity'],
-				               tags:            listing['tags'],
-				               materials:       listing['materials'],
-				               shop_section_id: listing['shop_section_id'],
-				               who_made:        listing['who_made'],
-				               when_made:       listing['when_made'],
-				               views:           listing['views'],
-				               creation_tsz:    listing['creation_tsz'],
+				Listing.create(title:                   listing['title'],
+				               description:             listing['description'],
+				               price:                   listing['price'],
+				               state:                   listing['state'],
+				               category_id:             listing['category_id'],
+				               is_supply:               listing['is_supply'],
+				               is_customizable:         listing['is_customizable'],
+				               etsy_listing_id:         listing['listing_id'],
+				               etsy_user_id:            listing['user_id'],
+				               currency:                listing['currency_code'],
+				               quantity:                listing['quantity'],
+				               tags:                    listing['tags'],
+				               materials:               listing['materials'],
+				               shop_section_id:         listing['shop_section_id'],
+				               who_made:                listing['who_made'],
+				               when_made:               listing['when_made'],
+				               views:                   listing['views'],
+				               creation_tsz:            listing['creation_tsz'],
+				               number_of_store_reviews: listing['number_of_store_reviews']
 				)
+
 
 			listing_id = listing['listing_id']
 
-
-			images = Retsy.images(listing_id)
+			images = Retsy.images(listing_id, i)
 			# images =  HTTParty.get("https://openapi.etsy.com/v2/listings/#{listing_id}/images?limit=100&offset=49900&api_key=hlq9zyrpxmcx4vb4vetw22a8")
 			images['results'].each do |image|
 				Image.find_by_listing_image_id(listing['listing_image_id']) ||
@@ -53,8 +48,7 @@ Image.delete_all
 
 			end
 
-
-			shop  = Retsy.shop(listing_id)
+			shop  = Retsy.shop(listing_id, i)
 			result=shop['results']['0']
 			Shop.find_by_shop_name(result['shop_name']) ||
 				Shop.create(
@@ -74,12 +68,24 @@ Image.delete_all
 					currency_code:           result['currency_code'],
 					num_favorites:           result['num_favorers'],
 
-
 				)
 
+			categories = Retsy.categories(i)
+			cat_result = categories['results']
+			cat_result.each do |category|
+				Category.find_by_etsy_category_id(category['category_id']) ||
+					Category.create(
+						etsy_category_id: category['category_id'],
+						name:             category['name'],
+						category_name:    category['category_name'],
+						short_name:       category['short_name'],
+						long_name:        category['long_name'],
+						num_children:     category['num_children']
+					)
+			end
 		end
-
 	end
+	i += 100
 end
 
 
